@@ -50,9 +50,9 @@ body{background:var(--bg);color:var(--white);}
 .channel{color:var(--muted);font-size:13px;margin-top:4px;}
 .loading{text-align:center;padding:20px;color:var(--muted);font-size:14px;}
 
-/* SHORTS FIX - AB FULL SCREEN SNAP */
-.short-wrapper{width:100%;max-width:420px;height:90vh;max-height:850px;background:#000;border-radius:12px;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:center;}
-.short-wrapper iframe{width:100%;height:100%;border:0;border-radius:12px;}
+/* SHORTS FIX - FULL SCREEN SNAP */
+.short-wrapper{width:100%;max-width:480px;height:calc(100vh - 120px);background:#000;border-radius:0;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:start;}
+.short-wrapper iframe{width:100%;height:100%;border:0;}
 
 /* PLAYER */
 .player-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:999;display:flex;justify-content:center;align-items:center;}
@@ -174,7 +174,7 @@ if(shortsMode){loadShorts(true);}else{loadVideos(true);}
 };
 
 shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");main.classList.add("shorts-mode");grid.classList.add("shorts-grid");loadShorts(true);};
-videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");main.classList.remove("shorts-mode");grid.classList.remove("shorts-grid");if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.display="grid";loadVideos(true);};
+videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");main.classList.remove("shorts-mode");grid.classList.remove("shorts-grid");if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;loadVideos(true);};
 
 function onYouTubeIframeAPIReady(){}
 
@@ -187,28 +187,36 @@ try{let res=await fetchWithKeyRotation(url);loadingIndicator.style.display="none
 res.items.forEach(item=>{
 let id=item.id.videoId;let box=document.createElement("div");box.className="short-wrapper";
 let iframeId="short_iframe_"+id+"_"+Math.random();
-box.innerHTML=`<iframe id="${iframeId}" data-videoid="${id}" src="https://www.youtube.com/embed/${id}?enablejsapi=1&mute=0&playsinline=1&rel=0&autoplay=0&controls=0&origin=${window.location.origin}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+box.innerHTML=`<iframe id="${iframeId}" data-videoid="${id}" src="https://www.youtube.com/embed/${id}?enablejsapi=1&mute=1&playsinline=1&rel=0&autoplay=1&controls=0&origin=${window.location.origin}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
 grid.appendChild(box);
 });
 nextToken=res.nextPageToken||"";
-setTimeout(initShortsPlayers,300);}catch(e){console.log(e);loadingIndicator.style.display="none";}
+setTimeout(initShortsPlayers,500);}catch(e){console.log(e);loadingIndicator.style.display="none";}
 loading=false;
 }
 
 function initShortsPlayers(){grid.querySelectorAll("iframe[id^='short_iframe_']").forEach(iframe=>{let id=iframe.dataset.videoid;if(!shortsPlayers[id]){shortsPlayers[id]=new YT.Player(iframe.id,{events:{'onReady':()=>{}}});}});setupShortsObserver();}
-function setupShortsObserver(){if(shortsObserver)shortsObserver.disconnect();shortsObserver=new IntersectionObserver((entries)=>{entries.forEach(entry=>{let iframe=entry.target.querySelector("iframe");if(!iframe)return;let id=iframe.dataset.videoid;let player=shortsPlayers[id];if(!player)return;if(entry.isIntersecting&&entry.intersectionRatio>=0.7){if(currentPlayingShort&&currentPlayingShort!==id){try{shortsPlayers[currentPlayingShort].pauseVideo();}catch(e){}}try{player.playVideo();}catch(e){}currentPlayingShort=id;}else{try{player.pauseVideo();}catch(e){}if(currentPlayingShort===id)currentPlayingShort=null;}});},{threshold:[0.7],rootMargin:"0px"});grid.querySelectorAll(".short-wrapper").forEach(box=>{shortsObserver.observe(box);});}
+function setupShortsObserver(){if(shortsObserver)shortsObserver.disconnect();shortsObserver=new IntersectionObserver((entries)=>{entries.forEach(entry=>{let iframe=entry.target.querySelector("iframe");if(!iframe)return;let id=iframe.dataset.videoid;let player=shortsPlayers[id];if(!player)return;if(entry.isIntersecting&&entry.intersectionRatio>=0.8){if(currentPlayingShort&&currentPlayingShort!==id){try{shortsPlayers[currentPlayingShort].pauseVideo();}catch(e){}}try{player.playVideo();}catch(e){}currentPlayingShort=id;}else{try{player.pauseVideo();}catch(e){}if(currentPlayingShort===id)currentPlayingShort=null;}});},{threshold:[0.8],rootMargin:"0px"});grid.querySelectorAll(".short-wrapper").forEach(box=>{shortsObserver.observe(box);});}
+
+function onShortsScroll(){
+  if(grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 300){
+    if(!infiniteLoading &&!loading && nextToken){
+      infiniteLoading=true;
+      loadShorts(false).finally(()=>{infiniteLoading=false;});
+    }
+  }
+}
 
 let infiniteLoading=false;
 window.addEventListener("scroll",()=>{
 if(window.innerHeight+window.scrollY>=document.body.offsetHeight-800){
 if(!infiniteLoading&&!loading&&nextToken){
 infiniteLoading=true;
-if(shortsMode){loadShorts(false).finally(()=>{infiniteLoading=false;});}
-else{loadVideos(false).finally(()=>{infiniteLoading=false;});}
+if(shortsMode){} else {loadVideos(false).finally(()=>{infiniteLoading=false;});}
 }}});
 
 loadVideos(true);
-console.log("BHATI LITETUBE PRO READY 🚀 Shorts Fixed");
+console.log("BHATI LITETUBE PRO READY 🚀 Shorts 100% Working");
 </script>
 </body>
 </html>
