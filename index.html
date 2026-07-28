@@ -36,8 +36,9 @@ body{background:var(--bg);color:var(--white);}
 
 /* GRID */
 .main{padding:24px 16px 30px;max-width:1800px;margin:0 auto;}
+.main.shorts-mode{padding:0;} /* NAYI LINE 1 */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px 12px;}
-.grid.shorts-grid{display:flex;flex-direction:column;align-items:center;gap:0;overflow-y:scroll;scroll-snap-type:y mandatory;height:calc(100vh - 120px);scroll-behavior:smooth;}
+.grid.shorts-grid{display:flex;flex-direction:column;align-items:center;gap:0;overflow-y:scroll;scroll-snap-type:y mandatory;height:calc(100vh - 120px);scroll-behavior:smooth;} /* NAYI LINE 2 */
 .card{background:transparent;border-radius:12px;overflow:hidden;cursor:pointer;}
 .thumb{height:180px;background:#000;border-radius:12px;overflow:hidden;position:relative;}
 .thumb img{width:100%;height:100%;object-fit:cover;transition:0.2s;}
@@ -50,7 +51,7 @@ body{background:var(--bg);color:var(--white);}
 .loading{text-align:center;padding:20px;color:var(--muted);font-size:14px;}
 
 /* SHORTS FIX - AB FULL SCREEN SNAP */
-.short-wrapper{width:100%;max-width:420px;height:90vh;max-height:850px;background:#000;border-radius:12px;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:center;}
+.short-wrapper{width:100%;max-width:420px;height:90vh;max-height:850px;background:#000;border-radius:12px;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:center;} /* NAYI LINE 3: scroll-snap-align + margin hataya */
 .short-wrapper iframe{width:100%;height:100%;border:0;border-radius:12px;}
 
 /* PLAYER */
@@ -78,7 +79,7 @@ body{background:var(--bg);color:var(--white);}
 <button id="saveBtn">💾 Data Saver</button>
 </div>
 
-<main class="main">
+<main class="main" id="main"> <!-- id add kiya -->
 <div class="grid" id="grid"></div>
 <div id="loadingIndicator" class="loading" style="display:none;">Loading...</div>
 </main>
@@ -97,6 +98,7 @@ let currentPlayingShort=null;
 let loadRequestId=0;
 let shortsObserver=null;
 const grid=document.getElementById("grid");
+const main=document.getElementById("main"); // NAYI LINE 4
 const input=document.getElementById("searchInput");
 const searchBtn=document.getElementById("searchBtn");
 const saveBtn=document.getElementById("saveBtn");
@@ -149,7 +151,8 @@ document.body.appendChild(box);
 
 async function loadVideos(clear=true){
 if(loading)return;loading=true;loadRequestId++;const currentRequest=loadRequestId;loadingIndicator.style.display="block";
-grid.classList.remove("shorts-grid");
+main.classList.remove("shorts-mode"); // NAYI LINE 5
+grid.classList.remove("shorts-grid"); // NAYI LINE 6
 if(clear){grid.innerHTML="";nextToken="";}
 let cacheKey="bhati_"+query+"_"+dataSaver+"_"+(nextToken||"first");
 let old=getCache(cacheKey);
@@ -170,8 +173,8 @@ saveBtn.innerHTML=dataSaver?"💾 Saver ON":"💾 Data Saver";
 if(shortsMode){loadShorts(true);}else{loadVideos(true);}
 };
 
-shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");grid.classList.add("shorts-grid");loadShorts(true);};
-videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");grid.classList.remove("shorts-grid");if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.display="grid";loadVideos(true);};
+shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");main.classList.add("shorts-mode");grid.classList.add("shorts-grid");loadShorts(true);}; // NAYI LINE 7
+videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");main.classList.remove("shorts-mode");grid.classList.remove("shorts-grid");if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.display="grid";loadVideos(true);}; // NAYI LINE 8
 
 function onYouTubeIframeAPIReady(){}
 
