@@ -38,7 +38,7 @@ body{background:var(--bg);color:var(--white);overflow-x:hidden;}
 .main{padding:24px 16px 30px;max-width:1800px;margin:0 auto;}
 .main.shorts-mode{padding:0;height:calc(100vh - 120px);overflow:hidden;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px 12px;}
-.grid.shorts-grid{display:flex;flex-direction:column;align-items:center;gap:0;overflow-y:auto;scroll-snap-type:y mandatory;height:100%;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
+.grid.shorts-grid{display:flex!important;flex-direction:column;align-items:center;gap:0;overflow-y:auto;scroll-snap-type:y mandatory;height:100%;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
 .card{background:transparent;border-radius:12px;overflow:hidden;cursor:pointer;}
 .thumb{height:180px;background:#000;border-radius:12px;overflow:hidden;position:relative;}
 .thumb img{width:100%;height:100%;object-fit:cover;transition:0.2s;}
@@ -50,8 +50,8 @@ body{background:var(--bg);color:var(--white);overflow-x:hidden;}
 .channel{color:var(--muted);font-size:13px;margin-top:4px;}
 .loading{text-align:center;padding:20px;color:var(--muted);font-size:14px;}
 
-/* SHORTS FIX - TIKTOK STYLE */
-.short-wrapper{width:100%;max-width:500px;height:calc(100vh - 120px);background:#000;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:start;flex-shrink:0;}
+/* SHORTS FIX - PURA SCREEN */
+.short-wrapper{width:100%;max-width:480px;height:calc(100vh - 120px);background:#000;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:start;flex-shrink:0;display:block;}
 .short-wrapper iframe{width:100%;height:100%;border:0;}
 
 /* PLAYER */
@@ -155,6 +155,7 @@ if(loading)return;loading=true;loadRequestId++;const currentRequest=loadRequestI
 main.classList.remove("shorts-mode");
 grid.classList.remove("shorts-grid");
 grid.style.overflowY="visible";
+grid.style.display="grid";
 if(clear){grid.innerHTML="";nextToken="";}
 let cacheKey="bhati_"+query+"_"+dataSaver+"_"+(nextToken||"first");
 let old=getCache(cacheKey);
@@ -175,8 +176,8 @@ saveBtn.innerHTML=dataSaver?"💾 Saver ON":"💾 Data Saver";
 if(shortsMode){loadShorts(true);}else{loadVideos(true);}
 };
 
-shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");main.classList.add("shorts-mode");grid.classList.add("shorts-grid");grid.addEventListener("scroll",onShortsScroll);loadShorts(true);};
-videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");main.classList.remove("shorts-mode");grid.classList.remove("shorts-grid");grid.removeEventListener("scroll",onShortsScroll);if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.overflowY="visible";loadVideos(true);};
+shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");main.classList.add("shorts-mode");grid.classList.add("shorts-grid");grid.style.display="flex";grid.addEventListener("scroll",onShortsScroll);loadShorts(true);};
+videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");main.classList.remove("shorts-mode");grid.classList.remove("shorts-grid");grid.style.display="grid";grid.removeEventListener("scroll",onShortsScroll);if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.overflowY="visible";loadVideos(true);};
 
 function onYouTubeIframeAPIReady(){}
 
@@ -193,12 +194,12 @@ box.innerHTML=`<iframe id="${iframeId}" data-videoid="${id}" src="https://www.yo
 grid.appendChild(box);
 });
 nextToken=res.nextPageToken||"";
-setTimeout(initShortsPlayers,600);}catch(e){console.log(e);loadingIndicator.style.display="none";}
+setTimeout(initShortsPlayers,700);}catch(e){console.log(e);loadingIndicator.style.display="none";}
 loading=false;
 }
 
-function initShortsPlayers(){grid.querySelectorAll("iframe[id^='short_iframe_']").forEach(iframe=>{let id=iframe.dataset.videoid;if(!shortsPlayers[id]){shortsPlayers[id]=new YT.Player(iframe.id,{events:{'onReady':()=>{}}});}});setupShortsObserver();}
-function setupShortsObserver(){if(shortsObserver)shortsObserver.disconnect();shortsObserver=new IntersectionObserver((entries)=>{entries.forEach(entry=>{let iframe=entry.target.querySelector("iframe");if(!iframe)return;let id=iframe.dataset.videoid;let player=shortsPlayers[id];if(!player)return;if(entry.isIntersecting&&entry.intersectionRatio>=0.85){if(currentPlayingShort&&currentPlayingShort!==id){try{shortsPlayers[currentPlayingShort].pauseVideo();}catch(e){}}try{player.playVideo();}catch(e){}currentPlayingShort=id;}else{try{player.pauseVideo();}catch(e){}if(currentPlayingShort===id)currentPlayingShort=null;}});},{threshold:[0.85],root:null});grid.querySelectorAll(".short-wrapper").forEach(box=>{shortsObserver.observe(box);});}
+function initShortsPlayers(){grid.querySelectorAll("iframe[id^='short_iframe_']").forEach(iframe=>{let id=iframe.dataset.videoid;if(!shortsPlayers[id]){shortsPlayers[id]=new YT.Player(iframe.id,{events:{'onReady':()=>{}}});}iframe.parentElement.onclick=()=>{let p=shortsPlayers[id];if(p.isMuted()){p.unMute();p.setVolume(100);}else{p.mute();}}});setupShortsObserver();}
+function setupShortsObserver(){if(shortsObserver)shortsObserver.disconnect();shortsObserver=new IntersectionObserver((entries)=>{entries.forEach(entry=>{let iframe=entry.target.querySelector("iframe");if(!iframe)return;let id=iframe.dataset.videoid;let player=shortsPlayers[id];if(!player)return;if(entry.isIntersecting&&entry.intersectionRatio>=0.9){if(currentPlayingShort&&currentPlayingShort!==id){try{shortsPlayers[currentPlayingShort].pauseVideo();}catch(e){}}try{player.playVideo();}catch(e){}currentPlayingShort=id;}else{try{player.pauseVideo();}catch(e){}if(currentPlayingShort===id)currentPlayingShort=null;}});},{threshold:[0.9],root:null});grid.querySelectorAll(".short-wrapper").forEach(box=>{shortsObserver.observe(box);});}
 
 function onShortsScroll(){
   if(grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 500){
@@ -217,7 +218,7 @@ loadVideos(false).finally(()=>{infiniteLoading=false;});
 }}});
 
 loadVideos(true);
-console.log("BHATI LITETUBE PRO READY 🚀 Shorts 100% Working");
+console.log("BHATI LITETUBE PRO READY 🚀");
 </script>
 </body>
 </html>
