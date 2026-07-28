@@ -37,6 +37,7 @@ body{background:var(--bg);color:var(--white);}
 /* GRID */
 .main{padding:24px 16px 30px;max-width:1800px;margin:0 auto;}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px 12px;}
+.grid.shorts-grid{display:flex;flex-direction:column;align-items:center;gap:0;overflow-y:scroll;scroll-snap-type:y mandatory;height:calc(100vh - 120px);scroll-behavior:smooth;}
 .card{background:transparent;border-radius:12px;overflow:hidden;cursor:pointer;}
 .thumb{height:180px;background:#000;border-radius:12px;overflow:hidden;position:relative;}
 .thumb img{width:100%;height:100%;object-fit:cover;transition:0.2s;}
@@ -48,8 +49,8 @@ body{background:var(--bg);color:var(--white);}
 .channel{color:var(--muted);font-size:13px;margin-top:4px;}
 .loading{text-align:center;padding:20px;color:var(--muted);font-size:14px;}
 
-/* SHORTS FIX - AB FULL SCREEN */
-.short-wrapper{width:100%;max-width:420px;height:90vh;max-height:850px;background:#000;border-radius:12px;overflow:hidden;margin:0 auto 16px;position:relative;}
+/* SHORTS FIX - AB FULL SCREEN SNAP */
+.short-wrapper{width:100%;max-width:420px;height:90vh;max-height:850px;background:#000;border-radius:12px;overflow:hidden;margin:0 auto;position:relative;scroll-snap-align:center;}
 .short-wrapper iframe{width:100%;height:100%;border:0;border-radius:12px;}
 
 /* PLAYER */
@@ -148,6 +149,7 @@ document.body.appendChild(box);
 
 async function loadVideos(clear=true){
 if(loading)return;loading=true;loadRequestId++;const currentRequest=loadRequestId;loadingIndicator.style.display="block";
+grid.classList.remove("shorts-grid");
 if(clear){grid.innerHTML="";nextToken="";}
 let cacheKey="bhati_"+query+"_"+dataSaver+"_"+(nextToken||"first");
 let old=getCache(cacheKey);
@@ -168,14 +170,14 @@ saveBtn.innerHTML=dataSaver?"💾 Saver ON":"💾 Data Saver";
 if(shortsMode){loadShorts(true);}else{loadVideos(true);}
 };
 
-shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");loadShorts(true);};
-videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.display="grid";loadVideos(true);};
+shortBtn.onclick=()=>{shortsMode=true;videoBtn.classList.remove("active");shortBtn.classList.add("active");grid.classList.add("shorts-grid");loadShorts(true);};
+videoBtn.onclick=()=>{shortsMode=false;videoBtn.classList.add("active");shortBtn.classList.remove("active");grid.classList.remove("shorts-grid");if(shortsObserver)shortsObserver.disconnect();Object.values(shortsPlayers).forEach(p=>{try{p.pauseVideo();}catch(e){}});shortsPlayers={};currentPlayingShort=null;grid.style.display="grid";loadVideos(true);};
 
 function onYouTubeIframeAPIReady(){}
 
 async function loadShorts(clear=true){
 if(loading)return;loading=true;loadingIndicator.style.display="block";
-if(clear){grid.innerHTML="";grid.style.display="flex";grid.style.flexDirection="column";grid.style.alignItems="center";nextToken="";Object.values(shortsPlayers).forEach(p=>{try{p.destroy();}catch(e){}});shortsPlayers={};currentPlayingShort=null;}
+if(clear){grid.innerHTML="";nextToken="";Object.values(shortsPlayers).forEach(p=>{try{p.destroy();}catch(e){}});shortsPlayers={};currentPlayingShort=null;}
 
 let url=makeURL(true);
 try{let res=await fetchWithKeyRotation(url);loadingIndicator.style.display="none";
